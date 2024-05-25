@@ -2,7 +2,23 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+def gaps(file_info):
+    gaps = file_info.isnull()
+    gap_cols = gaps.columns
+    gap_cols_list = ""
+    for i in gap_cols:
+        res = gaps[gaps[i] == 1]
+        if res.empty == 0:
+            gap_cols_list = gap_cols_list + i + " "
+    print("There are gaps in these columns:", gap_cols_list)
+    sum_list = gaps.sum()
+    print("Number of gaps in each column:")
+    print(sum_list[sum_list != 0])
+    print("Percentage of gaps in each column:")
+    print(sum_list[sum_list != 0] / n * 100)
+
 file_info = pd.read_csv('train.csv')
+
 """Task1"""
 n, m = file_info.shape
 print("Number of columns in this file:", m)
@@ -18,9 +34,8 @@ for line in dup_lines:
         cnt = cnt + 1
 print("There are", cnt, "duplicate rows in this file")
     
-
-"""Task 2"""
-survived = len(file_info[file_info['Embarked'] == 'S'])
+""" Task 2 """
+survived = len(file_info[file_info['Survived'] == 1])
 survived_proc = round(survived / n * 100, 2)
 print(survived_proc,"% of the passengers survived")
 not_survived_proc = round(100 - survived / n * 100, 2)
@@ -53,3 +68,21 @@ plt.title("Gender pie chart")
 plt.pie(g_gender, labels = label_gender)
 plt.legend(g_gender)
 plt.show()
+
+""" Task 3 """
+num_cols = file_info.select_dtypes(include=np.number)
+col = num_cols.columns
+for i in col:
+    plt.title(i)
+    plt.hist(num_cols[i])
+    plt.show()
+
+""" Task 4 """
+print("All gaps:")
+gaps(file_info)
+s_file_info = file_info[file_info['Survived'] == 1]
+print("Gaps for passengers who survived:")
+gaps(s_file_info)
+print("Gaps for passengers who did not survive:")
+s_file_info = file_info[file_info['Survived'] == 0]
+gaps(s_file_info)
