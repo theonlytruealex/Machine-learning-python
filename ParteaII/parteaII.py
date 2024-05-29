@@ -26,7 +26,7 @@ def zScore(dataFrame, col = "Age", zFactor = 3):
 
 """ Subtask 1 - split dataset """
 
-colsTrain = ['Age', 'Sex', 'Pclass', 'Fare']
+colsTrain = ['Age', 'Sex', 'Pclass', 'Fare', 'Parch', 'SibSp']
 colsUsed = colsTrain + ['Survived']
 unsplitDf = pd.read_csv('../DataForAll/train.csv')[colsUsed]
 unsplitDf.replace({'male': 1, 'female' : 0}, inplace=True)
@@ -56,5 +56,9 @@ clf = ptree.DecisionTreeClassifier()
 clf.fit(X, y)
 y_pred = clf.predict(X_truth)
 accuracy = pm.accuracy_score(y_truth, y_pred)
+precision = pm.precision_score(y_truth, y_pred)
+recall = pm.recall_score(y_truth, y_pred)
 
-print(accuracy)
+print("Accuracy: ", accuracy)
+print("Precision: ", precision)
+print("Recall: ", recall)
