@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 import sklearn.preprocessing as pk
+import sklearn.tree as ptree
+import sklearn.metrics as pm
 
 """ Task 1 """
 
@@ -24,23 +26,35 @@ def zScore(dataFrame, col = "Age", zFactor = 3):
 
 """ Subtask 1 - split dataset """
 
-unsplitDf = pd.read_csv('../DataForAll/train.csv')
+colsTrain = ['Age', 'Sex', 'Pclass', 'Fare']
+colsUsed = colsTrain + ['Survived']
+unsplitDf = pd.read_csv('../DataForAll/train.csv')[colsUsed]
+unsplitDf.replace({'male': 1, 'female' : 0}, inplace=True)
 trainSet = unsplitDf.iloc[:int(0.8 * len(unsplitDf)),:]
 testSet = unsplitDf.iloc[int(0.8 * len(unsplitDf)):,:]
 
 """ Subtask 2- clean up the data: I want it cleaned up before normalization"""
 trainSet = removeOutliers(trainSet)
 trainSet = removeOutliers(trainSet, "Fare")
-trainSet.replace({'male': 0, 'female' : 1}, inplace=True)
-trainSet.replace({'C': 0, 'Q' : 1, 'S': 2}, inplace=True)
 trainSet["Age"].fillna(trainSet.Age.mean(), inplace=True)
-trainSet["Embarked"].fillna(trainSet.Embarked.median(), inplace=True)
 
 """ Normalize data """
 normalizedDf = trainSet
-normalizedDf['Age'] = pk.minmax_scale(trainSet['Age'])
-normalizedDf['Fare'] = pk.minmax_scale(trainSet['Fare'])
-
+normalizedDf['Age'] = pk.scale(trainSet['Age'])
+normalizedDf['Fare'] = pk.scale(trainSet['Fare'])
+testSet['Age'] = pk.scale(testSet['Age'])
+testSet['Fare'] = pk.scale(testSet['Fare'])
 print(normalizedDf)
 
 """ Subtask 3 - """
+
+X = normalizedDf[colsTrain]
+y = normalizedDf['Survived']
+y_truth = testSet['Survived']
+X_truth = testSet[colsTrain]
+clf = ptree.DecisionTreeClassifier()
+clf.fit(X, y)
+y_pred = clf.predict(X_truth)
+accuracy = pm.accuracy_score(y_truth, y_pred)
+
+print(accuracy)
