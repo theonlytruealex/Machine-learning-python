@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import random
+import seaborn as sns
 
 def gaps(file_info, n):
     gaps = file_info.isnull()
@@ -20,7 +21,7 @@ def gaps(file_info, n):
 
 file_info = pd.read_csv('train.csv')
 
-"""Task1"""
+""" Task1 """
 n, m = file_info.shape
 print("Number of columns in this file:", m)
 print("Column types: ")
@@ -34,7 +35,7 @@ for line in dup_lines:
     if line == 1:
         cnt = cnt + 1
 print("There are", cnt, "duplicate rows in this file")
-    
+
 """ Task 2 """
 survived = len(file_info[file_info['Survived'] == 1])
 survived_proc = round(survived / n * 100, 2)
@@ -79,6 +80,7 @@ for i in col:
         plt.hist(num_cols[i])
         plt.show()
 
+        
 """ Task 4 """
 print("All gaps:")
 gaps(file_info, n)
@@ -136,13 +138,12 @@ print("[61, max]:", len(ages4), "men")
 values = [men_ages1, men_ages2, men_ages3, men_ages4]
 ranges = ['0, 20', '20, 40', '40, 60', '60, 100']
 data = {ranges[0]: [values[0]], ranges[1]: [values[1]], ranges[2]: [values[2]], ranges[3]: [values[3]]}
-new_df = pd.DataFrame(data)
-new_df.plot(kind = 'bar')
+new_file_info = pd.DataFrame(data)
+new_file_info.plot(kind = 'bar')
 plt.title("Men survival percentage based on age")
 plt.show()
 
-"""Task 7"""
-
+""" Task 7 """
 children = file_info[file_info['Age'] < 18]
 children_no = len(children)
 children_no = children_no / n * 100
@@ -154,7 +155,81 @@ adults_no = len(adults)
 ad_surv = len(adults[adults['Survived'] == 1])
 ad_surv = ad_surv / adults_no * 100
 data = {'Adults': [ad_surv], 'Children': [ch_surv]}
-new_df = pd.DataFrame(data)
-new_df.plot(kind = 'bar')
+new_file_info = pd.DataFrame(data)
+new_file_info.plot(kind = 'bar')
 plt.title("Adults / Children survival percentage")
+plt.show()
+
+
+""" Task 8 """
+nr_cols = file_info.select_dtypes(include=np.number)
+for col in nr_cols.columns:
+    if file_info[col].isnull().any():
+        for pclass in file_info['Pclass'].unique():
+            mean_col = file_info.loc[file_info['Pclass'] == pclass, col].mean()
+            file_info.loc[(file_info['Pclass'] == pclass) & (file_info[col].isna()), col] = mean_col
+
+obj_cols = file_info.select_dtypes(include='object')
+for col in obj_cols.columns:
+    if file_info[col].isnull().any():
+        for pclass in file_info['Pclass'].unique():
+            mean_col = file_info.loc[file_info['Pclass'] == pclass, col].mode()[0]
+            file_info.loc[(file_info['Pclass'] == pclass) & (file_info[col].isna()), col] = mean_col
+
+print(file_info.info())
+
+""" Task 9 """
+
+titles = file_info['Name'].str.split('.').str[0]
+titles = titles.str.split(',').str[1]
+titles_list = []
+for i in titles.unique():
+    titles_list.append(i[1:])
+titles_col = []
+for i in titles:
+    titles_col.append(i[1:])
+""" print(titles_list) """
+title_gender = {
+    'Mr': 'male', 'Miss': 'female', 'Mrs': 'female', 'Master': 'male',
+    'Dr': ['male', 'female'], 'Rev': 'male', 'Col': 'male', 'Major': 'male',
+    'Mlle': 'female', 'Mme': 'female', 'Don': 'male', 'Lady': 'female',
+    'the Countess': 'female', 'Jonkheer': 'male', 'Sir': 'male', 'Capt': 'male',
+    'Ms': 'female'
+}
+print("check title - gender correspondence")
+k = 0
+correspond = {}
+for i in titles_list:
+    correspond[i] = [0]
+for i in file_info['Sex']:
+    if title_gender[titles_col[k]] == i:
+        print(file_info['Name'][k], ": yes")
+        correspond[titles_col[k]][0] = correspond[titles_col[k]][0] + 1
+    else:
+        print(file_info['Name'][k], ": no")
+    k = k + 1
+file_info_corr = pd.DataFrame(correspond)
+file_info_corr.plot(kind = 'bar')
+plt.title("Title - gender correspondence")
+plt.show()
+
+""" Task 10 """
+alone = {}
+alone['Alone'] = (file_info['SibSp'] + file_info['Parch'] == 0).astype(int)
+alone['Survived'] = file_info['Survived']
+alone_file_info = pd.DataFrame(alone)
+print(alone_file_info)
+plt.title("Alone - Survival correlation")
+plt.hist(alone_file_info)
+plt.legend(['Alone', 'Survived'])
+plt.xlabel('Alone')
+plt.ylabel('Number of passengers')
+plt.show()
+
+file_100 = file_info.head(100)
+
+sns.catplot(data=file_100, x='Fare', y='Pclass', hue='Survived', kind='swarm')
+plt.title('Fare - PClass - Survival correlation')
+plt.xlabel('Fare')
+plt.ylabel('PClass')
 plt.show()
