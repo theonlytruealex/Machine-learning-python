@@ -6,8 +6,8 @@ import sklearn.metrics as pm
 import matplotlib.pyplot as plt
 import sys
 import sklearn.ensemble as ens
-from collections import defaultdict
 import seaborn as sn
+from collections import defaultdict
 
 """ Task 1 """
 
@@ -52,9 +52,8 @@ colsTrain = ['Age', 'Sex', 'Pclass', 'Fare', 'Parch', 'SibSp']
 colsUsed = colsTrain + ['Survived']
 unsplitDf = pd.read_csv('../DataForAll/train.csv')[colsUsed]
 unsplitDf.replace({'male': 1, 'female' : 0}, inplace=True)
-trainSet = unsplitDf.iloc[:int(0.8 * len(unsplitDf)),:]
-testSet = unsplitDf.iloc[int(0.8 * len(unsplitDf)):,:]
-
+trainSet = unsplitDf.sample(frac=0.8)
+testSet = unsplitDf.drop(trainSet.index)
 """ Subtask 2- clean up the data: I want it cleaned up before normalization"""
 
 """ showHists(trainSet[colsTrain]) """
@@ -62,7 +61,7 @@ trainSet = removeOutliers(trainSet)
 trainSet = removeOutliers(trainSet, "Fare")
 trainSet["Age"].fillna(trainSet.Age.mean(), inplace=True)
 trainSet["Fare"].fillna(trainSet.Fare.mean(), inplace=True)
-showHeatMap(trainSet)
+""" showHeatMap(trainSet) """
 """ showHists(trainSet[colsTrain]) """
 
 """ Normalize data """
@@ -98,7 +97,7 @@ elif (len(sys.argv) == 4):
     y_pred = clf.predict(X_truth)
     accuracy = pm.accuracy_score(y_truth, y_pred)
     print(accuracy)
-    scores = defaultdict(list)
+    """ scores = defaultdict(list)
     for _ in range(5):
         for column in X.columns:
             X_t = X_truth.copy()
@@ -112,6 +111,6 @@ elif (len(sys.argv) == 4):
     plt.ylabel('Features')
     plt.title('Feature Importance')
     plt.gca().invert_yaxis()
-    plt.show()
+    plt.show() """
 
 
