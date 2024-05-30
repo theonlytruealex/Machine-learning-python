@@ -107,12 +107,24 @@ ages4 = file_info[file_info['Age'] > 60]
 nr4 = len(ages4)
 print("[61, max]:", nr4, "passengers")
 
-
-no_children = [random.randint(0, 3) for _ in range(n)]
-file_info['Children'] = no_children
-plt.title("Number of children per passenger")
-plt.hist(file_info['Children'])
+ageCateg = [None] * n
+k = 0
+for idx, i in file_info.iterrows():
+    if i['Age'] <= 20:
+        ageCateg[k] = 1
+    elif i['Age'] <= 40:
+        ageCateg[k] = 2
+    elif i['Age'] <= 60:
+        ageCateg[k] = 3
+    else:
+        ageCateg[k] = 4
+    k = k + 1
+file_info['AgeCategory'] = ageCateg
+file_info.to_csv('cerinta_5.csv')
+plt.title("Age category for each passenger")
+plt.hist(file_info['AgeCategory'])
 plt.show()
+
 
 """ Task 6 """
 ages1 = ages1[ages1['Sex'] == 'male']
@@ -166,17 +178,20 @@ nr_cols = file_info.select_dtypes(include=np.number)
 for col in nr_cols.columns:
     if file_info[col].isnull().any():
         for pclass in file_info['Pclass'].unique():
-            mean_col = file_info.loc[file_info['Pclass'] == pclass, col].mean()
-            file_info.loc[(file_info['Pclass'] == pclass) & (file_info[col].isna()), col] = mean_col
+            class_r = file_info['Pclass'] == pclass
+            mean_col = file_info.loc[class_r, col].mean()
+            gap = file_info[col].isna()
+            file_info.loc[class_r & gap, col] = mean_col
 
 obj_cols = file_info.select_dtypes(include='object')
 for col in obj_cols.columns:
     if file_info[col].isnull().any():
         for pclass in file_info['Pclass'].unique():
-            mean_col = file_info.loc[file_info['Pclass'] == pclass, col].mode()[0]
-            file_info.loc[(file_info['Pclass'] == pclass) & (file_info[col].isna()), col] = mean_col
-
-print(file_info.info())
+            class_r = file_info['Pclass'] == pclass
+            mean_col = file_info.loc[class_r, col].mode()[0]
+            gap = file_info[col].isna()
+            file_info.loc[class_r & gap, col] = mean_col
+file_info.to_csv('cerinta_8.csv')
 
 """ Task 9 """
 
