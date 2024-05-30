@@ -9,14 +9,11 @@ import sklearn.ensemble as ens
 import seaborn as sn
 from collections import defaultdict
 
-""" Task 1 """
-
 def removeOutliers(dataFrame, col = "Age"):
     [Q1, Q3] = dataFrame[col].quantile(q=[0.25, 0.75])
     IQR = Q3 - Q1
     return dataFrame.query('(@Q1 - 1.5 * @IQR) <= '+ col +' <= (@Q3 + 1.5 * @IQR)')
 
-""" Task 2 """
 
 def zScore(dataFrame, col = "Age", zFactor = 3):
     stdDev = dataFrame[col].std()
@@ -24,8 +21,6 @@ def zScore(dataFrame, col = "Age", zFactor = 3):
     maxZ = zFactor * stdDev + mean
     minZ = -zFactor * stdDev + mean
     return dataFrame.query('@minZ <= '+ col +' <= @maxZ')
-
-""" Task 3 """
 
 def showHists(dataFrame):
     num_cols = dataFrame.select_dtypes(include=np.number)
@@ -44,25 +39,28 @@ def showHeatMap(dataFrame):
     sn.heatmap(corrMatrix, annot=True)
     plt.show()
 
-""" Task 4 """
-
-""" Subtask 1 - split dataset """
-
+""" these are the columns I will work with, as the others are not as useful """
 colsTrain = ['Age', 'Sex', 'Pclass', 'Fare', 'Parch', 'SibSp']
 colsUsed = colsTrain + ['Survived']
 unsplitDf = pd.read_csv('../DataForAll/train.csv')[colsUsed]
+
+""" tranform strings into numbers """
 unsplitDf.replace({'male': 1, 'female' : 0}, inplace=True)
+
+""" split dataset """
 trainSet = unsplitDf.sample(frac=0.8)
 testSet = unsplitDf.drop(trainSet.index)
-""" Subtask 2- clean up the data: I want it cleaned up before normalization"""
 
-""" showHists(trainSet[colsTrain]) """
+""" before the clean-up """
+showHists(trainSet[colsTrain])
 trainSet = removeOutliers(trainSet)
 trainSet = removeOutliers(trainSet, "Fare")
 trainSet["Age"].fillna(trainSet.Age.mean(), inplace=True)
 trainSet["Fare"].fillna(trainSet.Fare.mean(), inplace=True)
-""" showHeatMap(trainSet) """
-""" showHists(trainSet[colsTrain]) """
+
+""" after the clean-up """
+showHists(trainSet[colsTrain])
+showHeatMap(trainSet)
 
 """ Normalize data """
 normalizedDf = trainSet
@@ -71,32 +69,54 @@ normalizedDf['Fare'] = pk.scale(trainSet['Fare'])
 testSet.loc[:, 'Age'] = pk.scale(testSet[['Age']])
 testSet.loc[:, 'Fare'] = pk.scale(testSet[['Fare']])
 
-""" Subtask 3 """
-
+""" breakdown into X and y """
 X = normalizedDf[colsTrain]
 y = normalizedDf['Survived']
 y_truth = testSet['Survived']
 X_truth = testSet[colsTrain]
 
+""" 2 methods of machine learning based on user input: 2 args for DecisionTree,
+    3 for RandomForest """
 if (len(sys.argv) == 3):
-    param1 = sys.argv[1]
-    param2 = sys.argv[2]
-    clf = ptree.DecisionTreeClassifier(criterion=param1, max_depth=int(param2))
+    clf = ptree.DecisionTreeClassifier(criterion=sys.argv[1], max_depth=int(sys.argv[2]))
+
+    """ train the tree """
     clf.fit(X, y)
     y_pred = clf.predict(X_truth)
+
+    """ performance paramethers """
     accuracy = pm.accuracy_score(y_truth, y_pred)
     precision = pm.precision_score(y_truth, y_pred)
     recall = pm.recall_score(y_truth, y_pred)
     F1 = 2 * precision * recall / (precision + recall)
     print(accuracy)
+    print(precision)
+    print(recall)
+    print(F1)
+
 elif (len(sys.argv) == 4):
-    X_truth.loc[:, 'Age'] = X_truth["Age"].fillna(X_truth.Age.median())
-    X_truth.loc[:, 'Fare'] = X_truth["Fare"].fillna(X_truth.Fare.median())
-    clf = ens.RandomForestClassifier(int(sys.argv[1]), criterion=sys.argv[2], max_depth=int(sys.argv[3]), random_state=1, oob_score=True)
+
+    """ remove NaN's- RandomForest doesn't support them """
+    X_truth.loc[:, 'Age'] = X_truth["Age"].fillna(X_truth.Age.mean())
+    X_truth.loc[:, 'Fare'] = X_truth["Fare"].fillna(X_truth.Fare.mean())
+    clf = ens.RandomForestClassifier(int(sys.argv[1]), criterion=sys.argv[2],
+                                     max_depth=int(sys.argv[3]), random_state=1, oob_score=True)
+    
+    """ train model """
     clf.fit(X, y)
     y_pred = clf.predict(X_truth)
     accuracy = pm.accuracy_score(y_truth, y_pred)
+
+    """ performance parameters """
+    precision = pm.precision_score(y_truth, y_pred)
+    recall = pm.recall_score(y_truth, y_pred)
+    F1 = 2 * precision * recall / (precision + recall)
     print(accuracy)
+    print(precision)
+    print(recall)
+    print(F1)
+
+    """ variable importance """
     scores = defaultdict(list)
     for _ in range(5):
         for column in X.columns:
@@ -104,7 +124,8 @@ elif (len(sys.argv) == 4):
             X_t[column] = np.random.permutation(X_t[column].values)
             shuff_acc = pm.accuracy_score(y_truth, clf.predict(X_t))
             scores[column].append(np.abs(accuracy - shuff_acc) / accuracy)
-    importance, features = zip(*sorted([(round(np.mean(score), 4), feat) for feat, score in scores.items()], reverse=True))
+    importance, features = zip(*sorted([(round(np.mean(score), 4), feat) for feat,
+                                        score in scores.items()], reverse=True))
     plt.figure(figsize=(10, 6))
     plt.barh(features, importance, color='skyblue')
     plt.xlabel('Importance')

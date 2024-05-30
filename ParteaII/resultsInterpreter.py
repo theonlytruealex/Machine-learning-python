@@ -9,7 +9,11 @@ def showHeatMap(dataFrame):
     plt.show()
 
 df = pd.read_csv('./results.csv')
+
+""" take results of randomForestParams """
 df.replace({'entropy': 1, 'gini' : 0}, inplace=True)
+
+""" take top 50 parameter combinations """
 worldsFinest = df.nlargest(50, columns=['accuracy'], keep='all')
 print(worldsFinest)
 print("Best criterion: ", worldsFinest['criterion'].mean())
