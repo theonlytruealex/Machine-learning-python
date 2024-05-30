@@ -97,7 +97,7 @@ elif (len(sys.argv) == 4):
     y_pred = clf.predict(X_truth)
     accuracy = pm.accuracy_score(y_truth, y_pred)
     print(accuracy)
-    """ scores = defaultdict(list)
+    scores = defaultdict(list)
     for _ in range(5):
         for column in X.columns:
             X_t = X_truth.copy()
@@ -111,6 +111,6 @@ elif (len(sys.argv) == 4):
     plt.ylabel('Features')
     plt.title('Feature Importance')
     plt.gca().invert_yaxis()
-    plt.show() """
+    plt.show()
 
 
